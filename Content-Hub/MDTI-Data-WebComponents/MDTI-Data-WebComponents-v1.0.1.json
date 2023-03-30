@@ -507,7 +507,7 @@
         {
             "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
             "apiVersion": "2022-01-01-preview",
-            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-MDTI-Automated-Triage', parameters('Log-Analytics-Workspace'))]",
+            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-MDTI-Data-WebComponents', parameters('Log-Analytics-Workspace'))]",
             "properties": {
                 "parentId": "[resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name'))]",
                 "contentId": "MDTI-Data-WebComponents",
