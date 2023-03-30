@@ -2,19 +2,22 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
     "contentVersion": "1.0.0.0",
     "parameters": {
+        "Log-Analytics-Workspace": {
+            "value": ""
+        },
         "Client-Id": {
             "value": ""
         },
         "Client-Secret": {
             "value": ""
         },
-        "kvname": {
+        "Key-Vault-Name": {
             "value": ""
         },
-        "keyVaultSecretName": {
+        "Key-Vault-Secret-Name": {
             "value": ""
         },
-        "userObjectID": {
+        "User-Object-Id": {
             "value": ""
         }
     }

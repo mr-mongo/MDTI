@@ -2,7 +2,10 @@
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
     "contentVersion": "1.0",
     "parameters": {
-        "PlaybookName": {
+        "Log-Analytics-Workspace": {
+            "type": "String"
+        },
+        "Playbook-Name": {
             "defaultValue": "MDTI-Base",
             "type": "String"
         },
@@ -24,7 +27,7 @@
             "defaultValue": "beta",
             "type": "String"
         },
-        "keyVaultSku": {
+        "Key-Vault-Sku": {
             "defaultValue": "standard",
             "type": "string",
             "metadata": {
@@ -35,19 +38,19 @@
                 "standard"
             ]
         },
-        "kvname": {
+        "Key-Vault-Name": {
             "type": "string",
             "metadata": {
                 "description": "The name of the Key Vault resource"
             }
         },
-        "keyVaultSecretName": {
+        "Key-Vault-Secret-Name": {
             "type": "string",
             "metadata": {
                 "description": "The name for the Service Principal Client Secret in the Key Vault"
             }
         },
-        "userObjectID": {
+        "User-Object-Id": {
             "type": "string",
             "metadata": {
                 "description": "Object ID, aka Principal ID, of the User to assign Key Vault Administrator role. If not supplied, then a role must be assigned manually in Azure Portal in order to view Key Vault contents"
@@ -56,8 +59,7 @@
     },
     "variables": {
         "workspace-location-inline": "[resourceGroup().location]",
-        "workspace-name": "LA-Workspace",
-        "workspaceResourceId": "[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
+        "workspaceResourceId": "[resourceId('microsoft.OperationalInsights/Workspaces', parameters('Log-Analytics-Workspace'))]",
         "roleNameUser": "Key Vault Secrets User",
         "roleNameAdmin": "Key Vault Administrator",
         "roleIdMapping": {
@@ -70,18 +72,18 @@
             "Key Vault Secrets Officer": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7",
             "Key Vault Secrets User": "4633458b-17de-408a-b874-0445c86b69e6"
         },
-        "connections_keyvault_name": "[format('keyvault-{0}', parameters('PlaybookName'))]"
+        "connections_keyvault_name": "[format('keyvault-{0}', parameters('Playbook-Name'))]"
     },
     "resources": [
         {
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2022-07-01",
-            "name": "[parameters('kvname')]",
+            "name": "[parameters('Key-Vault-Name')]",
             "location": "[variables('workspace-location-inline')]",
             "properties": {
                 "sku": {
                     "family": "A",
-                    "name": "[parameters('keyVaultSku')]"
+                    "name": "[parameters('Key-Vault-Sku')]"
                 },
                 "tenantId": "[subscription().tenantId]",
                 "enabledForDeployment": false,
@@ -97,42 +99,42 @@
         {
             "type": "Microsoft.KeyVault/vaults/secrets",
             "apiVersion": "2021-10-01",
-            "name": "[format('{0}/{1}', parameters('kvname'), parameters('keyVaultSecretName'))]",
+            "name": "[format('{0}/{1}', parameters('Key-Vault-Name'), parameters('Key-Vault-Secret-Name'))]",
             "properties": {
                 "value": "[parameters('Client-Secret')]"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', parameters('kvname'))]"
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name'))]"
             ]
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-10-01-preview",
-            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('kvname'))]",
-            "name": "[guid(variables('roleIdMapping')[variables('roleNameUser')], resourceId('Microsoft.KeyVault/vaults', parameters('kvname')))]",
+            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('Key-Vault-Name'))]",
+            "name": "[guid(variables('roleIdMapping')[variables('roleNameUser')], resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name')))]",
             "properties": {
-                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('PlaybookName')), '2017-07-01', 'full').identity.principalId]",
+                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name')), '2017-07-01', 'full').identity.principalId]",
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roleIdMapping')[variables('roleNameUser')])]",
                 "principalType": "ServicePrincipal"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', parameters('kvname'))]",
-                "[resourceId('Microsoft.Logic/workflows', parameters('PlaybookName'))]"
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name'))]",
+                "[resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name'))]"
             ]
         },
         {
-            "condition": "[not(empty(parameters('userObjectID')))]",
+            "condition": "[not(empty(parameters('User-Object-Id')))]",
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-10-01-preview",
-            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('kvname'))]",
-            "name": "[guid(variables('roleIdMapping')[variables('roleNameAdmin')], resourceId('Microsoft.KeyVault/vaults', parameters('kvname')))]",
+            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('Key-Vault-Name'))]",
+            "name": "[guid(variables('roleIdMapping')[variables('roleNameAdmin')], resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name')))]",
             "properties": {
-                "principalId": "[parameters('userObjectID')]",
+                "principalId": "[parameters('User-Object-Id')]",
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roleIdMapping')[variables('roleNameAdmin')])]",
                 "principalType": "User"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', parameters('kvname'))]"
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name'))]"
             ]
         },
         {
@@ -148,14 +150,14 @@
                 },
                 "parameterValueType": "Alternative",
                 "alternativeParameterValues": {
-                    "vaultName": "[parameters('kvname')]"
+                    "vaultName": "[parameters('Key-Vault-Name')]"
                 }
             }
         },
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[parameters('PlaybookName')]",
+            "name": "[parameters('Playbook-Name')]",
             "location": "[variables('workspace-location-inline')]",
             "identity": {
                 "type": "SystemAssigned"
@@ -273,7 +275,7 @@
                                     }
                                 },
                                 "method": "get",
-                                "path": "[format('/secrets/@{{encodeURIComponent(''{0}'')}}/value', parameters('keyVaultSecretName'))]"
+                                "path": "[format('/secrets/@{{encodeURIComponent(''{0}'')}}/value', parameters('Key-Vault-Secret-Name'))]"
                             }
                         }
                     }
