@@ -298,7 +298,7 @@
                 }
             },
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/connections', variables('connections_keyvault_name'))]"
+                "[resourceId('Microsoft.Web/connections', variables('connections_keyvault_name'))]"
             ]
         },
         {
