@@ -507,12 +507,12 @@
         {
             "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
             "apiVersion": "2022-01-01-preview",
-            "name": "LA-Workspace/Microsoft.SecurityInsights/Playbook-MDTI-Data-WebComponents",
+            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-MDTI-Automated-Triage', parameters('Log-Analytics-Workspace'))]",
             "properties": {
-                "parentId": "/subscriptions/41db8a20-7583-407e-a736-58551e919dcc/resourceGroups/LogAnalytics/providers/Microsoft.Logic/workflows/MDTI-Data-WebComponents",
+                "parentId": "[resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name'))]",
                 "contentId": "MDTI-Data-WebComponents",
                 "kind": "Playbook",
-                "version": "1.0",
+                "version": "1.0.1",
                 "source": {
                     "kind": "Solution",
                     "name": "Microsoft Defender Threat Intelligence",
@@ -548,7 +548,7 @@
         ],
         "releaseNotes": [
             {
-                "version": "1.0.0",
+                "version": "1.0.1",
                 "title": "MDTI Data WebComponents",
                 "notes": [
                     "Initial version"
