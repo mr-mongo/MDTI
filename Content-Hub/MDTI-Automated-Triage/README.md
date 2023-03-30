@@ -7,4 +7,4 @@ You can deploy this ARM template using the `Deploy to Azure` button below, or cr
 
 ![MDTI-Automated-Triage Template spec](https://raw.githubusercontent.com/mr-mongo/MDTI/main/Content-Hub/.images/mdti_automatedtriage_template_spec.png "MDTI-Automated-Triage Template spec")
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmr-mongo%2FMDTI%2Fmain%2FContent-Hub%2FMDTI-Automated-Triage-v1.0.1.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmr-mongo%2FMDTI%2Fmain%2FContent-Hub%2FMDTI-Automated-Triage%2FMDTI-Automated-Triage-v1.0.1.json)
