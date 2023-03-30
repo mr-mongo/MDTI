@@ -2,7 +2,7 @@
 These ARM templates will contain fixes, as necessary, for the OOTB MDTI Content Hub solution.
 
 #### MDTI-Base v1.0.2
-This creates a Key Vault dependency to store the Client-Secret. 
+This creates a Key Vault dependency to store the Client-Secret.  
 The benefit of this is secure storage of the Client-Secret instead of relying on Logic App SecureString parameters, which in turn allows the Client-Secret value to be updated within the Key Vault instead of requiring a complete redeployment of the MDTI-Base template.  
 Fixes:
 1. Create the MDTI-Base Logic App with a System-Managed Identity
