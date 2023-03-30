@@ -6,7 +6,7 @@
             "type": "String"
         },
         "Playbook-Name": {
-            "defaultValue": "MDTI-Data-WebComponents",
+            "defaultValue": "MDTI-Intel-Reputation",
             "type": "String"
         }
     },
@@ -118,7 +118,7 @@
                                     "inputs": {
                                         "body": {
                                             "incidentArmId": "@triggerBody()?['object']?['id']",
-                                            "message": "<p>MDTI Web Components for Indicator : @{items('For_each_Host')?['HostName']}.@{items('For_each_Host')?['DnsDomain']}<br>\n@{body('Create_Host_HTML_table')}</p>"
+                                            "message": "<p>MDTI Reputation: @{items('For_each_Host')?['HostName']}.@{items('For_each_Host')?['DnsDomain']}<br>\nClassification: @{body('Get_reputation_for_host')?['classification']} (@{body('Get_reputation_for_host')?['score']})<br>\n@{body('Create_Host_HTML_table')}</p>"
                                         },
                                         "host": {
                                             "connection": {
@@ -131,7 +131,7 @@
                                 },
                                 "Create_Host_HTML_table": {
                                     "runAfter": {
-                                        "For_each_host_component": [
+                                        "Set_host_variable": [
                                             "Succeeded"
                                         ]
                                     },
@@ -141,30 +141,7 @@
                                         "from": "@variables('result_output_host')"
                                     }
                                 },
-                                "For_each_host_component": {
-                                    "foreach": "@body('Parse_host_components')",
-                                    "actions": {
-                                        "Append_to_array_variable": {
-                                            "type": "AppendToArrayVariable",
-                                            "inputs": {
-                                                "name": "result_output_host",
-                                                "value": {
-                                                    "Category": "@items('For_each_host_component')['category']",
-                                                    "LastSeenDateTime": "@items('For_each_host_component')['lastSeenDateTime']",
-                                                    "Name": "@items('For_each_host_component')['name']",
-                                                    "Version": "@items('For_each_host_component')['version']"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "runAfter": {
-                                        "Set_Result_Host": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "Foreach"
-                                },
-                                "Get_components_for_host": {
+                                "Get_reputation_for_host": {
                                     "type": "Http",
                                     "inputs": {
                                         "authentication": {
@@ -178,11 +155,8 @@
                                             "Content-Type": "application/json"
                                         },
                                         "method": "GET",
-                                        "queries": {
-                                            "$count": "true",
-                                            "$top": "25"
-                                        },
-                                        "uri": "https://@{body('MDTI-Base')?['MDTI-BaseUrl']}/@{body('MDTI-Base')?['Api-Version']}/security/threatIntelligence/hosts('@{items('For_each_Host')?['HostName']}.@{items('For_each_Host')?['DnsDomain']}')/components"
+                                        "path": "/reputation",
+                                        "uri": "https://@{body('MDTI-Base')?['MDTI-BaseUrl']}/@{body('MDTI-Base')?['Api-Version']}/security/threatIntelligence/hosts('@{items('For_each_Host')?['HostName']}.@{items('For_each_Host')?['DnsDomain']}')/reputation"
                                     },
                                     "runtimeConfiguration": {
                                         "secureData": {
@@ -192,70 +166,16 @@
                                         }
                                     }
                                 },
-                                "Parse_host_components": {
+                                "Set_host_variable": {
                                     "runAfter": {
-                                        "Get_components_for_host": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "ParseJson",
-                                    "inputs": {
-                                        "content": "@body('Get_components_for_host')?['value']",
-                                        "schema": {
-                                            "items": {
-                                                "properties": {
-                                                    "category": {
-                                                        "type": "string"
-                                                    },
-                                                    "firstSeenDateTime": {
-                                                        "type": "string"
-                                                    },
-                                                    "host": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    },
-                                                    "id": {
-                                                        "type": "string"
-                                                    },
-                                                    "lastSeenDateTime": {
-                                                        "type": "string"
-                                                    },
-                                                    "name": {
-                                                        "type": "string"
-                                                    },
-                                                    "version": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "firstSeenDateTime",
-                                                    "lastSeenDateTime",
-                                                    "name",
-                                                    "version",
-                                                    "category",
-                                                    "host"
-                                                ],
-                                                "type": "object"
-                                            },
-                                            "type": "array"
-                                        }
-                                    }
-                                },
-                                "Set_Result_Host": {
-                                    "runAfter": {
-                                        "Parse_host_components": [
+                                        "Get_reputation_for_host": [
                                             "Succeeded"
                                         ]
                                     },
                                     "type": "SetVariable",
                                     "inputs": {
                                         "name": "result_output_host",
-                                        "value": []
+                                        "value": "@body('Get_reputation_for_host')?['rules']"
                                     }
                                 }
                             },
@@ -264,12 +184,7 @@
                                     "Succeeded"
                                 ]
                             },
-                            "type": "Foreach",
-                            "runtimeConfiguration": {
-                                "concurrency": {
-                                    "repetitions": 1
-                                }
-                            }
+                            "type": "Foreach"
                         },
                         "For_each_IP_Address": {
                             "foreach": "@body('Entities_-_Get_IPs')?['IPs']",
@@ -284,7 +199,7 @@
                                     "inputs": {
                                         "body": {
                                             "incidentArmId": "@triggerBody()?['object']?['id']",
-                                            "message": "<p>MDTI Web Components for Indicator: @{items('For_each_IP_Address')?['Address']}<br>\n@{body('Create_IP_HTML_table')}</p>"
+                                            "message": "<p>MDTI Reputation: @{items('For_each_IP_Address')?['Address']}<br>\nClassification: @{body('Get_reputation')?['classification']} (@{body('Get_reputation')?['score']})<br>\n@{body('Create_IP_HTML_table')}</p>"
                                         },
                                         "host": {
                                             "connection": {
@@ -297,7 +212,7 @@
                                 },
                                 "Create_IP_HTML_table": {
                                     "runAfter": {
-                                        "For_each_component": [
+                                        "Set_ip_variable": [
                                             "Succeeded"
                                         ]
                                     },
@@ -307,30 +222,7 @@
                                         "from": "@variables('result_output_ip')"
                                     }
                                 },
-                                "For_each_component": {
-                                    "foreach": "@body('Parse_components')",
-                                    "actions": {
-                                        "Append_to_Result_IP": {
-                                            "type": "AppendToArrayVariable",
-                                            "inputs": {
-                                                "name": "result_output_ip",
-                                                "value": {
-                                                    "Category": "@items('For_each_component')?['category']",
-                                                    "LastSeenDateTime": "@items('For_each_component')?['lastSeenDateTime']",
-                                                    "Name": "@items('For_each_component')?['name']",
-                                                    "Version": "@items('For_each_component')?['version']"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "runAfter": {
-                                        "Set_Result_IP": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "Foreach"
-                                },
-                                "Get_components": {
+                                "Get_reputation": {
                                     "type": "Http",
                                     "inputs": {
                                         "authentication": {
@@ -344,11 +236,8 @@
                                             "Content-Type": "application/json"
                                         },
                                         "method": "GET",
-                                        "queries": {
-                                            "$count": "true",
-                                            "$top": "25"
-                                        },
-                                        "uri": "https://@{body('MDTI-Base')?['MDTI-BaseUrl']}/@{body('MDTI-Base')?['Api-Version']}/security/threatIntelligence/hosts('@{items('For_each_IP_Address')?['Address']}')/components"
+                                        "path": "/reputation",
+                                        "uri": "https://@{body('MDTI-Base')?['MDTI-BaseUrl']}/@{body('MDTI-Base')?['Api-Version']}/security/threatIntelligence/hosts('@{items('For_each_IP_Address')?['Address']}')/reputation"
                                     },
                                     "runtimeConfiguration": {
                                         "secureData": {
@@ -358,70 +247,16 @@
                                         }
                                     }
                                 },
-                                "Parse_components": {
+                                "Set_ip_variable": {
                                     "runAfter": {
-                                        "Get_components": [
-                                            "Succeeded"
-                                        ]
-                                    },
-                                    "type": "ParseJson",
-                                    "inputs": {
-                                        "content": "@body('Get_components')?['value']",
-                                        "schema": {
-                                            "items": {
-                                                "properties": {
-                                                    "category": {
-                                                        "type": "string"
-                                                    },
-                                                    "firstSeenDateTime": {
-                                                        "type": "string"
-                                                    },
-                                                    "host": {
-                                                        "properties": {
-                                                            "id": {
-                                                                "type": "string"
-                                                            }
-                                                        },
-                                                        "type": "object"
-                                                    },
-                                                    "id": {
-                                                        "type": "string"
-                                                    },
-                                                    "lastSeenDateTime": {
-                                                        "type": "string"
-                                                    },
-                                                    "name": {
-                                                        "type": "string"
-                                                    },
-                                                    "version": {
-                                                        "type": "string"
-                                                    }
-                                                },
-                                                "required": [
-                                                    "id",
-                                                    "firstSeenDateTime",
-                                                    "lastSeenDateTime",
-                                                    "name",
-                                                    "version",
-                                                    "category",
-                                                    "host"
-                                                ],
-                                                "type": "object"
-                                            },
-                                            "type": "array"
-                                        }
-                                    }
-                                },
-                                "Set_Result_IP": {
-                                    "runAfter": {
-                                        "Parse_components": [
+                                        "Get_reputation": [
                                             "Succeeded"
                                         ]
                                     },
                                     "type": "SetVariable",
                                     "inputs": {
                                         "name": "result_output_ip",
-                                        "value": []
+                                        "value": "@body('Get_reputation')?['rules']"
                                     }
                                 }
                             },
@@ -430,12 +265,7 @@
                                     "Succeeded"
                                 ]
                             },
-                            "type": "Foreach",
-                            "runtimeConfiguration": {
-                                "concurrency": {
-                                    "repetitions": 1
-                                }
-                            }
+                            "type": "Foreach"
                         },
                         "Init_Result_Host": {
                             "runAfter": {
@@ -480,13 +310,6 @@
                                         "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
                                     }
                                 }
-                            },
-                            "runtimeConfiguration": {
-                                "secureData": {
-                                    "properties": [
-                                        "outputs"
-                                    ]
-                                }
                             }
                         }
                     }
@@ -507,10 +330,10 @@
         {
             "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
             "apiVersion": "2022-01-01-preview",
-            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-MDTI-Data-WebComponents', parameters('Log-Analytics-Workspace'))]",
+            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-MDTI-Intel-Reputation',parameters('Log-Analytics-Workspace'))]",
             "properties": {
                 "parentId": "[resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name'))]",
-                "contentId": "MDTI-Data-WebComponents",
+                "contentId": "MDTI-Intel-Reputation",
                 "kind": "Playbook",
                 "version": "1.0.1",
                 "source": {
@@ -532,9 +355,9 @@
         }
     ],
     "metadata": {
-        "comments": "Perform automated enrichment on the Microsoft Sentinel Incidents based on MDTI Internet data.",
-        "title": "MDTI-Data-WebComponents",
-        "description": "This playbook uses the MDTI Components data to automatically enrich incidents generated by Microsoft Sentinel. Leverage this playbook in order to enrich your incidents with [Webcomponents](https://learn.microsoft.com/en-us/defender/threat-intelligence/data-sets#components) data hosted by the indicators found within the incident. These components allow a user to understand the makeup of a webpage or the technology and services driving a specific piece of infrastructure. Pivoting on unique components can find actors' infrastructure or other sites that are compromised. Users can also understand if a website might be vulnerable to a specific attack or compromise based on the technologies that it is running.",
+        "comments": "Perform automated enrichment on the Microsoft Sentinel Incidents based on MDTI Reputation data.",
+        "title": "MDTI-Intel-Reputation",
+        "description": "This playbook uses the MDTI API to automatically enrich incidents generated by Microsoft Sentinel. Reputation information provides analyst with a decision as to whether an indicator is considered benign, suspicious or malicious. Analysts can leverage this playbook in order to enrich indicators found within an incident. Each reputation result is contained within a comment and will include detailed scoring information noting why a given indicator is considered suspicious or malicious with links back to the MDTI platform for more information.",
         "prerequisites": [
             "This playbook inherits API connections created and established within a base playbook. Ensure you have deployed [MDTI-Base](https://raw.githubusercontent.com/Azure/Azure-Sentinel/master/Solutions/Microsoft%20Defender%20Threat%20Intelligence/Playbooks/MDTI-Base/azuredeploy.json) prior to deploying this playbook. If you have trouble accessing your account or your credentials contact your account representative (mdtidiscussion[@]microsoft.com)."
         ],
@@ -549,7 +372,7 @@
         "releaseNotes": [
             {
                 "version": "1.0.1",
-                "title": "MDTI Data WebComponents",
+                "title": "MDTI Intel Reputation",
                 "notes": [
                     "Initial version",
                     "Updated with Secure Inputs for HTTP REST and Secure Output for MDTI-Base actions"

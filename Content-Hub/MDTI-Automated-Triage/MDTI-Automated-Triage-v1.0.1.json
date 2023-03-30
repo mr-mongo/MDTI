@@ -521,7 +521,7 @@
                 "title": "MDTI Automated Triage",
                 "notes": [
                     "Initial version",
-                    "Updated with Secure Inputs for MDTI-Base and HTTP REST actions"
+                    "Updated with Secure Inputs for HTTP REST and Secure Output for MDTI-Base actions"
                 ]
             }
         ]
