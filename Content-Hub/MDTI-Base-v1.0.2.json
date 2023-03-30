@@ -296,7 +296,10 @@
                         }
                     }
                 }
-            }
+            },
+            "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/connections', variables('connections_keyvault_name'))]"
+            ]
         },
         {
             "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
