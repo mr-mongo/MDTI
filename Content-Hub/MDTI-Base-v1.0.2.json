@@ -301,7 +301,7 @@
         {
             "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
             "apiVersion": "2022-01-01-preview",
-            "name": "LA-Workspace/Microsoft.SecurityInsights/Playbook-MDTI-Base",
+            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-MDTI-Base', parameters('Log-Analytics-Workspace'))]",
             "properties": {
                 "parentId": "/subscriptions/41db8a20-7583-407e-a736-58551e919dcc/resourceGroups/LogAnalytics/providers/Microsoft.Logic/workflows/MDTI-Base",
                 "contentId": "MDTI-Base",
