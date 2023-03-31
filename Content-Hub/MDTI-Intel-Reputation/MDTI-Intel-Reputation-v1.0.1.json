@@ -161,7 +161,7 @@
                                     "runtimeConfiguration": {
                                         "secureData": {
                                             "properties": [
-                                                "inputs"
+                                                "outputs"
                                             ]
                                         }
                                     }
