@@ -46,9 +46,10 @@
             }
         },
         "User-Object-Id": {
+            "defaultValue": "00000000-0000-0000-0000-000000000000",
             "type": "string",
             "metadata": {
-                "description": "Object ID, aka Principal ID, of the User to assign Key Vault Administrator role. If not supplied, then a role must be assigned manually in Azure Portal in order to view Key Vault contents"
+                "description": "Object ID, aka Principal ID, of the User to assign Key Vault Administrator role. If not changed from the default, then a role must be assigned manually the Key Vault Access Control (IAM) in order to view Key Vault contents"
             }
         }
     },
