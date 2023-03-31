@@ -11,12 +11,6 @@
         "Client-Secret": {
             "value": ""
         },
-        "Key-Vault-Name": {
-            "value": ""
-        },
-        "Key-Vault-Secret-Name": {
-            "value": ""
-        },
         "User-Object-Id": {
             "value": ""
         }
