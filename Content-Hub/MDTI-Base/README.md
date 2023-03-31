@@ -1,8 +1,7 @@
 ### MDTI-Base v1.0.1
 This creates a Key Vault dependency to store the Client-Secret.  
 
-The benefit of this is secure storage of the Client-Secret instead of relying on Logic App SecureString parameters, which in turn allows the Client-Secret value to be updated within the Key Vault instead of 
-requiring a complete redeployment of the MDTI-Base template.  
+The benefit of this is secure storage of the Client-Secret instead of relying on Logic App SecureString parameters, which in turn allows the Client-Secret value to be updated within the Key Vault instead of requiring a complete redeployment of the MDTI-Base template.  
 
 Fixes:
 1. Create the MDTI-Base Logic App with a System-Managed Identity

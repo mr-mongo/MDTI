@@ -304,10 +304,10 @@
         {
             "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
             "apiVersion": "2022-01-01-preview",
-            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-MDTI-Base', parameters('Log-Analytics-Workspace'))]",
+            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-{1}', parameters('Log-Analytics-Workspace'), parameters('Playbook-Name'))]",
             "properties": {
                 "parentId": "[resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name'))]",
-                "contentId": "MDTI-Base",
+                "contentId": "[parameters('Playbook-Name')]",
                 "kind": "Playbook",
                 "version": "1.0.1",
                 "source": {
@@ -330,7 +330,7 @@
     ],
     "metadata": {
         "comments": "Establish the needed base resources to leverage with all MDTI playbooks.",
-        "title": "MDTI-Base",
+        "title": "[parameters('Playbook-Name')]",
         "description": "This playbook creates a shared API Connection for all MDTI playbooks to leverage. This eases the configuration process for a user during deployment of the Microsoft Defender Threat Intelligence(MDTI) solution. In time, this base playbook may be extended to set more functionality. Azure AD App Registration credentials(ClientId/ClientSecret/TenantId) with MDTI API Permissions are needed when configuring this playbook. Those can be found on your [Azure Client App](https://learn.microsoft.com/en-us/rest/api/azure/#register-your-client-application-with-azure-ad) page. If you have trouble accessing your account or your credentials contact your account representative (mdtidiscussion[@]microsoft.com).",
         "prerequisites": [
             "None"
