@@ -5,7 +5,7 @@
         "Log-Analytics-Workspace": {
             "type": "String"
         },
-        "Playbook-Name": {
+        "PlaybookName": {
             "defaultValue": "MDTI-Base",
             "type": "String"
         },
@@ -49,7 +49,7 @@
             "defaultValue": "00000000-0000-0000-0000-000000000000",
             "type": "string",
             "metadata": {
-                "description": "Object ID, aka Principal ID, of the User to assign Key Vault Administrator role. If not changed from the default, then a role must be assigned manually the Key Vault Access Control (IAM) in order to view Key Vault contents"
+                "description": "Object ID, aka Principal ID, of the User to assign Key Vault Administrator role. If left unchanged, then a role must be assigned manually the Key Vault Access Control (IAM) in order to view Key Vault contents"
             }
         }
     },
@@ -68,7 +68,7 @@
             "Key Vault Secrets Officer": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7",
             "Key Vault Secrets User": "4633458b-17de-408a-b874-0445c86b69e6"
         },
-        "connections_keyvault_name": "[format('keyvault-{0}', parameters('Playbook-Name'))]",
+        "connections_keyvault_name": "[format('keyvault-{0}', parameters('PlaybookName'))]",
         "keyvaultname": "[concat('kv-mdti-', uniqueString(parameters('Log-Analytics-Workspace')))]"
     },
     "resources": [
@@ -110,13 +110,13 @@
             "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('keyvaultname'))]",
             "name": "[guid(variables('roleIdMapping')[variables('roleNameUser')], resourceId('Microsoft.KeyVault/vaults', variables('keyvaultname')))]",
             "properties": {
-                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name')), '2017-07-01', 'full').identity.principalId]",
+                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('PlaybookName')), '2017-07-01', 'full').identity.principalId]",
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roleIdMapping')[variables('roleNameUser')])]",
                 "principalType": "ServicePrincipal"
             },
             "dependsOn": [
                 "[resourceId('Microsoft.KeyVault/vaults', variables('keyvaultname'))]",
-                "[resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name'))]"
+                "[resourceId('Microsoft.Logic/workflows', parameters('PlaybookName'))]"
             ]
         },
         {
@@ -154,7 +154,7 @@
         {
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
-            "name": "[parameters('Playbook-Name')]",
+            "name": "[parameters('PlaybookName')]",
             "location": "[variables('workspace-location-inline')]",
             "identity": {
                 "type": "SystemAssigned"
@@ -211,7 +211,7 @@
                     "actions": {
                         "Response": {
                             "runAfter": {
-                                "Get_SpSecret": [
+                                "Get_Client_Secret": [
                                     "Succeeded"
                                 ]
                             },
@@ -227,7 +227,7 @@
                             "inputs": {
                                 "body": {
                                     "clientId": "@parameters('Client-Id')",
-                                    "clientSecret": "@body('Get_SpSecret')?['value']",
+                                    "clientSecret": "@body('Get_Client_Secret')?['value']",
                                     "resource": "@{parameters('MDTI-Resource')}",
                                     "tenantId": "@parameters('Tenant-Id')",
                                     "MDTI-BaseUrl": "@{parameters('MDTI-BaseUrl')}",
@@ -262,7 +262,7 @@
                                 "statusCode": 200
                             }
                         },
-                        "Get_SpSecret": {
+                        "Get_Client_Secret": {
                             "runAfter": {},
                             "type": "ApiConnection",
                             "inputs": {
@@ -301,10 +301,10 @@
         {
             "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
             "apiVersion": "2022-01-01-preview",
-            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-{1}', parameters('Log-Analytics-Workspace'), parameters('Playbook-Name'))]",
+            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-{1}', parameters('Log-Analytics-Workspace'), parameters('PlaybookName'))]",
             "properties": {
-                "parentId": "[resourceId('Microsoft.Logic/workflows', parameters('Playbook-Name'))]",
-                "contentId": "[parameters('Playbook-Name')]",
+                "parentId": "[resourceId('Microsoft.Logic/workflows', parameters('PlaybookName'))]",
+                "contentId": "[parameters('PlaybookName')]",
                 "kind": "Playbook",
                 "version": "1.0.1",
                 "source": {
@@ -327,7 +327,7 @@
     ],
     "metadata": {
         "comments": "Establish the needed base resources to leverage with all MDTI playbooks.",
-        "title": "[parameters('Playbook-Name')]",
+        "title": "[parameters('PlaybookName')]",
         "description": "This playbook creates a shared API Connection for all MDTI playbooks to leverage. This eases the configuration process for a user during deployment of the Microsoft Defender Threat Intelligence(MDTI) solution. In time, this base playbook may be extended to set more functionality. Azure AD App Registration credentials(ClientId/ClientSecret/TenantId) with MDTI API Permissions are needed when configuring this playbook. Those can be found on your [Azure Client App](https://learn.microsoft.com/en-us/rest/api/azure/#register-your-client-application-with-azure-ad) page. If you have trouble accessing your account or your credentials contact your account representative (mdtidiscussion[@]microsoft.com).",
         "prerequisites": [
             "None"
