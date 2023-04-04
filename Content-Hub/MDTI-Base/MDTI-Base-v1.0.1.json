@@ -1,10 +1,39 @@
 {
     "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-    "contentVersion": "1.0",
-    "parameters": {
-        "Log-Analytics-Workspace": {
-            "type": "String"
+    "contentVersion": "1.0.0.0",
+    "metadata": {
+        "comments": "Establish the needed base resources to leverage with all MDTI playbooks.",
+        "title": "MDTI-Base",
+        "description": "This playbook creates a shared API Connection for all MDTI playbooks to leverage. This eases the configuration process for a user during deployment of the Microsoft Defender Threat Intelligence(MDTI) solution. In time, this base playbook may be extended to set more functionality. Azure AD App Registration credentials(ClientId/ClientSecret/TenantId) with MDTI API Permissions are needed when configuring this playbook. Those can be found on your [Azure Client App](https://learn.microsoft.com/en-us/rest/api/azure/#register-your-client-application-with-azure-ad) page. If you have trouble accessing your account or your credentials contact your account representative (mdtidiscussion[@]microsoft.com).",
+        "prerequisites": [
+            "None"
+        ],
+        "lastUpdateTime": "2023-03-09T00:00:00.000Z",
+        "entities": [],
+        "tags": [],
+        "postDeployment": [
+            "After deploying the playbook, you must authorize the connections leveraged.",
+            "1. Visit the playbook resource.",
+            "2. Under 'Development Tools' (located on the left), click 'API Connections'.",
+            "3. Ensure each connection has been authorized."
+        ],
+        "support": {
+            "tier": "microsoft"
         },
+        "author": {
+            "name": "Ajay Kallur, Microsoft"
+        },
+        "releaseNotes": [
+            {
+                "version": "1.0.1",
+                "title": "MDTI Base",
+                "notes": [
+                    "Updated version with Key Vault to hold secret"
+                ]
+            }
+        ]
+    },
+    "parameters": {
         "PlaybookName": {
             "defaultValue": "MDTI-Base",
             "type": "String"
@@ -13,7 +42,7 @@
             "type": "String"
         },
         "Client-Secret": {
-            "type": "SecureString"
+            "type": "securestring"
         },
         "MDTI-Resource": {
             "defaultValue": "https://graph.microsoft.com",
@@ -26,6 +55,10 @@
         "Api-Version": {
             "defaultValue": "beta",
             "type": "String"
+        },
+        "Key-Vault-Name": {
+            "defaultValue": "[concat('kv-mdti-', uniqueString(parameters('Client-Id'), utcNow()))]",
+            "type": "string"
         },
         "Key-Vault-Sku": {
             "defaultValue": "standard",
@@ -54,29 +87,14 @@
         }
     },
     "variables": {
-        "workspace-location-inline": "[resourceGroup().location]",
-        "workspaceResourceId": "[resourceId('microsoft.OperationalInsights/Workspaces', parameters('Log-Analytics-Workspace'))]",
-        "roleNameUser": "Key Vault Secrets User",
-        "roleNameAdmin": "Key Vault Administrator",
-        "roleIdMapping": {
-            "Key Vault Administrator": "00482a5a-887f-4fb3-b363-3b7fe8e74483",
-            "Key Vault Certificates Officer": "a4417e6f-fecd-4de8-b567-7b0420556985",
-            "Key Vault Crypto Officer": "14b46e9e-c2b7-41b4-b07b-48a6ebf60603",
-            "Key Vault Crypto Service Encryption User": "e147488a-f6f5-4113-8e2d-b22465e65bf6",
-            "Key Vault Crypto User": "12338af0-0e69-4776-bea7-57ae8d297424",
-            "Key Vault Reader": "21090545-7ca7-4776-b22c-e363652d74d2",
-            "Key Vault Secrets Officer": "b86a8fe4-44ce-4948-aee5-eccb2c155cd7",
-            "Key Vault Secrets User": "4633458b-17de-408a-b874-0445c86b69e6"
-        },
-        "connections_keyvault_name": "[format('keyvault-{0}', parameters('PlaybookName'))]",
-        "keyvaultname": "[concat('kv-mdti-', uniqueString(parameters('Log-Analytics-Workspace')))]"
+        "connections_keyvault_name": "[format('keyvault-{0}', parameters('PlaybookName'))]"
     },
     "resources": [
         {
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2022-07-01",
-            "name": "[variables('keyvaultname')]",
-            "location": "[variables('workspace-location-inline')]",
+            "name": "[parameters('Key-Vault-Name')]",
+            "location": "[resourceGroup().location]",
             "properties": {
                 "sku": {
                     "family": "A",
@@ -96,58 +114,58 @@
         {
             "type": "Microsoft.KeyVault/vaults/secrets",
             "apiVersion": "2021-10-01",
-            "name": "[format('{0}/{1}', variables('keyvaultname'), parameters('Key-Vault-Secret-Name'))]",
+            "name": "[format('{0}/{1}', parameters('Key-Vault-Name'), parameters('Key-Vault-Secret-Name'))]",
             "properties": {
                 "value": "[parameters('Client-Secret')]"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyvaultname'))]"
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name'))]"
             ]
         },
         {
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-10-01-preview",
-            "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('keyvaultname'))]",
-            "name": "[guid(variables('roleIdMapping')[variables('roleNameUser')], resourceId('Microsoft.KeyVault/vaults', variables('keyvaultname')))]",
+            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('Key-Vault-Name'))]",
+            "name": "[guid('4633458b-17de-408a-b874-0445c86b69e6', resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name')))]",
             "properties": {
                 "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('PlaybookName')), '2017-07-01', 'full').identity.principalId]",
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roleIdMapping')[variables('roleNameUser')])]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
                 "principalType": "ServicePrincipal"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyvaultname'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name'))]",
                 "[resourceId('Microsoft.Logic/workflows', parameters('PlaybookName'))]"
             ]
         },
         {
-            "condition": "[not(empty(parameters('User-Object-Id')))]",
+            "condition": "[not(equals(parameters('User-Object-Id'), '00000000-0000-0000-0000-000000000000'))]",
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-10-01-preview",
-            "scope": "[format('Microsoft.KeyVault/vaults/{0}', variables('keyvaultname'))]",
-            "name": "[guid(variables('roleIdMapping')[variables('roleNameAdmin')], resourceId('Microsoft.KeyVault/vaults', variables('keyvaultname')))]",
+            "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('Key-Vault-Name'))]",
+            "name": "[guid('00482a5a-887f-4fb3-b363-3b7fe8e74483', resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name')))]",
             "properties": {
                 "principalId": "[parameters('User-Object-Id')]",
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', variables('roleIdMapping')[variables('roleNameAdmin')])]",
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '00482a5a-887f-4fb3-b363-3b7fe8e74483')]",
                 "principalType": "User"
             },
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyvaultname'))]"
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name'))]"
             ]
         },
         {
             "type": "Microsoft.Web/connections",
-            "apiVersion": "2018-07-01-preview",
+            "apiVersion": "2016-06-01",
             "name": "[variables('connections_keyvault_name')]",
-            "location": "[variables('workspace-location-inline')]",
+            "location": "[resourceGroup().location]",
             "kind": "V1",
             "properties": {
                 "displayName": "keyvault",
                 "api": {
-                    "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', variables('workspace-location-inline'), 'keyvault')]"
+                    "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', resourceGroup().location, 'keyvault')]"
                 },
                 "parameterValueType": "Alternative",
                 "alternativeParameterValues": {
-                    "vaultName": "[variables('keyvaultname')]"
+                    "vaultName": "[parameters('Key-Vault-Name')]"
                 }
             }
         },
@@ -155,13 +173,12 @@
             "type": "Microsoft.Logic/workflows",
             "apiVersion": "2017-07-01",
             "name": "[parameters('PlaybookName')]",
-            "location": "[variables('workspace-location-inline')]",
+            "location": "[resourceGroup().location]",
             "identity": {
                 "type": "SystemAssigned"
             },
             "tags": {
-                "Source": "MDTI",
-                "hidden-SentinelWorkspaceId": "[variables('workspaceResourceId')]"
+                "Source": "MDTI"
             },
             "properties": {
                 "state": "Enabled",
@@ -275,7 +292,8 @@
                                 "path": "[format('/secrets/@{{encodeURIComponent(''{0}'')}}/value', parameters('Key-Vault-Secret-Name'))]"
                             }
                         }
-                    }
+                    },
+                    "outputs": {}
                 },
                 "parameters": {
                     "$connections": {
@@ -288,7 +306,7 @@
                                         "type": "ManagedServiceIdentity"
                                     }
                                 },
-                                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', variables('workspace-location-inline'), 'keyvault')]"
+                                "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', resourceGroup().location, 'keyvault')]"
                             }
                         }
                     }
@@ -297,57 +315,6 @@
             "dependsOn": [
                 "[resourceId('Microsoft.Web/connections', variables('connections_keyvault_name'))]"
             ]
-        },
-        {
-            "type": "Microsoft.OperationalInsights/workspaces/providers/metadata",
-            "apiVersion": "2022-01-01-preview",
-            "name": "[format('{0}/Microsoft.SecurityInsights/Playbook-{1}', parameters('Log-Analytics-Workspace'), parameters('PlaybookName'))]",
-            "properties": {
-                "parentId": "[resourceId('Microsoft.Logic/workflows', parameters('PlaybookName'))]",
-                "contentId": "[parameters('PlaybookName')]",
-                "kind": "Playbook",
-                "version": "1.0.1",
-                "source": {
-                    "kind": "Solution",
-                    "name": "Microsoft Defender Threat Intelligence",
-                    "sourceId": "azuresentinel.azure-sentinel-solution-microsoftdefenderthreatint"
-                },
-                "author": {
-                    "name": "Microsoft",
-                    "email": "support@microsoft.com"
-                },
-                "support": {
-                    "name": "Microsoft Corporation",
-                    "email": "support@microsoft.com",
-                    "tier": "Microsoft",
-                    "link": "https://support.microsoft.com"
-                }
-            }
         }
-    ],
-    "metadata": {
-        "comments": "Establish the needed base resources to leverage with all MDTI playbooks.",
-        "title": "[parameters('PlaybookName')]",
-        "description": "This playbook creates a shared API Connection for all MDTI playbooks to leverage. This eases the configuration process for a user during deployment of the Microsoft Defender Threat Intelligence(MDTI) solution. In time, this base playbook may be extended to set more functionality. Azure AD App Registration credentials(ClientId/ClientSecret/TenantId) with MDTI API Permissions are needed when configuring this playbook. Those can be found on your [Azure Client App](https://learn.microsoft.com/en-us/rest/api/azure/#register-your-client-application-with-azure-ad) page. If you have trouble accessing your account or your credentials contact your account representative (mdtidiscussion[@]microsoft.com).",
-        "prerequisites": [
-            "None"
-        ],
-        "lastUpdateTime": "2023-03-09T00:00:00Z",
-        "postDeployment": [
-            "After deploying the playbook, you must authorize the connections leveraged.",
-            "1. Visit the playbook resource.",
-            "2. Under 'Development Tools' (located on the left), click 'API Connections'.",
-            "3. Ensure each connection has been authorized."
-        ],
-        "releaseNotes": [
-            {
-                "version": "1.0.1",
-                "title": "MDTI Base",
-                "notes": [
-                    "Initial version",
-                    "Updated version with Key Vault to hold secret"
-                ]
-            }
-        ]
-    }
+    ]
 }
