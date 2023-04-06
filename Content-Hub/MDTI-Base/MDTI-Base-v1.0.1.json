@@ -25,10 +25,11 @@
         },
         "releaseNotes": [
             {
-                "version": "1.0.1",
+                "version": "1.0.2",
                 "title": "MDTI Base",
                 "notes": [
-                    "Updated version with Key Vault to hold secret"
+                    "Updated version with Key Vault to hold secret",
+                    "Updated version with Integration Account to enable Inline Javascript action to check for non-Public IPs"
                 ]
             }
         ]
@@ -87,9 +88,24 @@
         }
     },
     "variables": {
-        "connections_keyvault_name": "[format('keyvault-{0}', parameters('PlaybookName'))]"
+        "connections_keyvault_name": "[format('keyvault-{0}', parameters('PlaybookName'))]",
+        "integration_account_name": "mdti-integration-account",
+        "integration_pricing_sku": "free"
     },
     "resources": [
+        {
+            "apiVersion": "2016-06-01",
+            "name": "[variables('integration_account_name')]",
+            "location": "[resourceGroup().location]",
+            "type": "Microsoft.Logic/IntegrationAccounts",
+            "tags": {
+                "Source": "MDTI"
+            },
+            "sku": {
+                "name": "[variables('integration_pricing_sku')]"
+            },
+            "properties": {}
+        },
         {
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2022-07-01",
@@ -138,7 +154,6 @@
             ]
         },
         {
-            "condition": "[not(equals(parameters('User-Object-Id'), '00000000-0000-0000-0000-000000000000'))]",
             "type": "Microsoft.Authorization/roleAssignments",
             "apiVersion": "2020-10-01-preview",
             "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('Key-Vault-Name'))]",
