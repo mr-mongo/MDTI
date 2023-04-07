@@ -232,6 +232,11 @@
                                     "Succeeded"
                                 ]
                             },
+                            "runtimeConfiguration": {
+                                "concurrency": {
+                                    "repetitions": 1
+                                }
+                            },
                             "type": "Foreach"
                         },
                         "For_each_Host": {
