@@ -29,7 +29,7 @@
                 "title": "MDTI Base",
                 "notes": [
                     "Updated version with Key Vault to hold secret",
-                    "Updated version with Integration Account to enable Inline Javascript action to check for non-Public IPs"
+                    "Updated version with free-tier Integration Account to enable Inline Javascript action to check for non-Public IPs"
                 ]
             }
         ]
@@ -144,7 +144,7 @@
             "scope": "[format('Microsoft.KeyVault/vaults/{0}', parameters('Key-Vault-Name'))]",
             "name": "[guid('4633458b-17de-408a-b874-0445c86b69e6', resourceId('Microsoft.KeyVault/vaults', parameters('Key-Vault-Name')))]",
             "properties": {
-                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('PlaybookName')), '2017-07-01', 'full').identity.principalId]",
+                "principalId": "[reference(resourceId('Microsoft.Logic/workflows', parameters('PlaybookName')), '2019-05-01', 'full').identity.principalId]",
                 "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
                 "principalType": "ServicePrincipal"
             },
@@ -174,7 +174,7 @@
             "location": "[resourceGroup().location]",
             "kind": "V1",
             "properties": {
-                "displayName": "keyvault",
+                "displayName": "keyvault-MDTI-Base",
                 "api": {
                     "id": "[subscriptionResourceId('Microsoft.Web/locations/managedApis', resourceGroup().location, 'keyvault')]"
                 },
@@ -186,7 +186,7 @@
         },
         {
             "type": "Microsoft.Logic/workflows",
-            "apiVersion": "2017-07-01",
+            "apiVersion": "2019-05-01",
             "name": "[parameters('PlaybookName')]",
             "location": "[resourceGroup().location]",
             "identity": {

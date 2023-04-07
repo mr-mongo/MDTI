@@ -36,7 +36,7 @@
         "_email": "[variables('email')]",
         "MDTI-Automated-Triage": "MDTI-Automated-Triage",
         "_MDTI-Automated-Triage": "[variables('MDTI-Automated-Triage')]",
-        "playbookVersion1": "1.0",
+        "playbookVersion1": "1.0.2",
         "playbookContentId1": "MDTI-Automated-Triage",
         "_playbookContentId1": "[variables('playbookContentId1')]",
         "playbookId1": "[resourceId('Microsoft.Logic/workflows', variables('playbookContentId1'))]",
@@ -44,21 +44,21 @@
         "workspaceResourceId": "[resourceId('microsoft.OperationalInsights/Workspaces', parameters('workspace'))]",
         "MDTI-Base": "MDTI-Base",
         "_MDTI-Base": "[variables('MDTI-Base')]",
-        "playbookVersion2": "1.0",
+        "playbookVersion2": "1.0.2",
         "playbookContentId2": "MDTI-Base",
         "_playbookContentId2": "[variables('playbookContentId2')]",
         "playbookId2": "[resourceId('Microsoft.Logic/workflows', variables('playbookContentId2'))]",
         "playbookTemplateSpecName2": "[concat(parameters('workspace'),'-pl-',uniquestring(variables('_playbookContentId2')))]",
         "MDTI-Data-WebComponents": "MDTI-Data-WebComponents",
         "_MDTI-Data-WebComponents": "[variables('MDTI-Data-WebComponents')]",
-        "playbookVersion3": "1.0",
+        "playbookVersion3": "1.0.2",
         "playbookContentId3": "MDTI-Data-WebComponents",
         "_playbookContentId3": "[variables('playbookContentId3')]",
         "playbookId3": "[resourceId('Microsoft.Logic/workflows', variables('playbookContentId3'))]",
         "playbookTemplateSpecName3": "[concat(parameters('workspace'),'-pl-',uniquestring(variables('_playbookContentId3')))]",
         "MDTI-Intel-Reputation": "MDTI-Intel-Reputation",
         "_MDTI-Intel-Reputation": "[variables('MDTI-Intel-Reputation')]",
-        "playbookVersion4": "1.0",
+        "playbookVersion4": "1.0.2",
         "playbookContentId4": "MDTI-Intel-Reputation",
         "_playbookContentId4": "[variables('playbookContentId4')]",
         "playbookId4": "[resourceId('Microsoft.Logic/workflows', variables('playbookContentId4'))]",
@@ -166,13 +166,25 @@
                                         }
                                     },
                                     "actions": {
-                                        "Entities_-_Get_Hosts": {
+                                        "Entities_-_Get_DNS": {
+                                            "inputs": {
+                                                "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/entities/dnsresolution"
+                                            },
                                             "runAfter": {
                                                 "Init_Classification_Bit": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "ApiConnection",
+                                            "type": "ApiConnection"
+                                        },
+                                        "Entities_-_Get_Hosts": {
                                             "inputs": {
                                                 "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
                                                 "host": {
@@ -182,15 +194,15 @@
                                                 },
                                                 "method": "post",
                                                 "path": "/entities/host"
-                                            }
-                                        },
-                                        "Entities_-_Get_IPs": {
+                                            },
                                             "runAfter": {
                                                 "Init_Classification_Bit": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "ApiConnection",
+                                            "type": "ApiConnection"
+                                        },
+                                        "Entities_-_Get_IPs": {
                                             "inputs": {
                                                 "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
                                                 "host": {
@@ -200,7 +212,111 @@
                                                 },
                                                 "method": "post",
                                                 "path": "/entities/ip"
-                                            }
+                                            },
+                                            "runAfter": {
+                                                "Init_Classification_Bit": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ApiConnection"
+                                        },
+                                        "For_each_DNS": {
+                                            "actions": {
+                                                "Add_comment_to_incident_(V3)_3": {
+                                                    "inputs": {
+                                                        "body": {
+                                                            "incidentArmId": "@triggerBody()?['object']?['id']",
+                                                            "message": "<p>MDTI Reputation: @{items('For_each_DNS')?['DomainName']}<br>\nClassification: @{body('Get_Reputation_for_DNS')?['classification']} (@{body('Get_Reputation_for_DNS')?['score']})<br>\n@{body('Create_DNS_HTML_table')}</p>"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "post",
+                                                        "path": "/Incidents/Comment"
+                                                    },
+                                                    "runAfter": {
+                                                        "Create_DNS_HTML_table": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ApiConnection"
+                                                },
+                                                "Append_DNS_classification": {
+                                                    "inputs": {
+                                                        "name": "classification_bit",
+                                                        "value": "@body('Get_Reputation_for_DNS')?['classification']"
+                                                    },
+                                                    "runAfter": {
+                                                        "Get_Reputation_for_DNS": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "AppendToArrayVariable"
+                                                },
+                                                "Create_DNS_HTML_table": {
+                                                    "inputs": {
+                                                        "format": "HTML",
+                                                        "from": "@variables('result_output_dns')"
+                                                    },
+                                                    "runAfter": {
+                                                        "Set_dns_variable": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Table"
+                                                },
+                                                "Get_Reputation_for_DNS": {
+                                                    "inputs": {
+                                                        "authentication": {
+                                                            "audience": "@body('MDTI-Base')?['resource']",
+                                                            "clientId": "@body('MDTI-Base')?['clientId']",
+                                                            "secret": "@body('MDTI-Base')?['clientSecret']",
+                                                            "tenant": "@body('MDTI-Base')?['tenantId']",
+                                                            "type": "ActiveDirectoryOAuth"
+                                                        },
+                                                        "headers": {
+                                                            "Content-Type": "application/json"
+                                                        },
+                                                        "method": "GET",
+                                                        "uri": "https://@{body('MDTI-Base')?['MDTI-BaseUrl']}/@{body('MDTI-Base')?['Api-Version']}/security/threatIntelligence/hosts('@{items('For_each_DNS')?['DomainName']}')/reputation"
+                                                    },
+                                                    "runAfter": {},
+                                                    "runtimeConfiguration": {
+                                                        "secureData": {
+                                                            "properties": [
+                                                                "inputs"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "type": "Http"
+                                                },
+                                                "Set_dns_variable": {
+                                                    "inputs": {
+                                                        "name": "result_output_dns",
+                                                        "value": "@body('Get_Reputation_for_DNS')?['rules']"
+                                                    },
+                                                    "runAfter": {
+                                                        "Append_DNS_classification": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "SetVariable"
+                                                }
+                                            },
+                                            "foreach": "@body('Entities_-_Get_DNS')?['Dnsresolutions']",
+                                            "runAfter": {
+                                                "Init_Result_DNS": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "runtimeConfiguration": {
+                                                "concurrency": {
+                                                    "repetitions": 1
+                                                }
+                                            },
+                                            "type": "Foreach"
                                         },
                                         "For_each_Host": {
                                             "actions": {
@@ -455,12 +571,6 @@
                                             "type": "JavaScriptCode"
                                         },
                                         "Init_Classification_Bit": {
-                                            "runAfter": {
-                                                "MDTI-Base": [
-                                                    "Succeeded"
-                                                ]
-                                            },
-                                            "type": "InitializeVariable",
                                             "inputs": {
                                                 "variables": [
                                                     {
@@ -468,15 +578,31 @@
                                                         "type": "array"
                                                     }
                                                 ]
-                                            }
-                                        },
-                                        "Init_Result_Host": {
+                                            },
                                             "runAfter": {
-                                                "Entities_-_Get_Hosts": [
+                                                "MDTI-Base": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "InitializeVariable",
+                                            "type": "InitializeVariable"
+                                        },
+                                        "Init_Result_DNS": {
+                                            "inputs": {
+                                                "variables": [
+                                                    {
+                                                        "name": "result_output_dns",
+                                                        "type": "array"
+                                                    }
+                                                ]
+                                            },
+                                            "runAfter": {
+                                                "Entities_-_Get_DNS": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "InitializeVariable"
+                                        },
+                                        "Init_Result_Host": {
                                             "inputs": {
                                                 "variables": [
                                                     {
@@ -484,15 +610,15 @@
                                                         "type": "array"
                                                     }
                                                 ]
-                                            }
-                                        },
-                                        "Init_Result_IP": {
+                                            },
                                             "runAfter": {
-                                                "Entities_-_Get_IPs": [
+                                                "Entities_-_Get_Hosts": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "InitializeVariable",
+                                            "type": "InitializeVariable"
+                                        },
+                                        "Init_Result_IP": {
                                             "inputs": {
                                                 "variables": [
                                                     {
@@ -500,32 +626,38 @@
                                                         "type": "array"
                                                     }
                                                 ]
-                                            }
+                                            },
+                                            "runAfter": {
+                                                "Entities_-_Get_IPs": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "InitializeVariable"
                                         },
                                         "MDTI-Base": {
-                                            "type": "Workflow",
                                             "inputs": {
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "[[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
+                                                        "id": "/subscriptions/c6229d3c-9fb0-404c-9a21-22bdcc0cf547/resourceGroups/Sentinel-RG/providers/Microsoft.Logic/workflows/MDTI-Base"
                                                     }
                                                 }
                                             },
+                                            "runAfter": {},
                                             "runtimeConfiguration": {
                                                 "secureData": {
                                                     "properties": [
                                                         "outputs"
                                                     ]
                                                 }
-                                            }
+                                            },
+                                            "type": "Workflow"
                                         },
                                         "Malicious_or_Suspicious": {
                                             "actions": {
                                                 "Condition_2": {
                                                     "actions": {
                                                         "Update_incident": {
-                                                            "type": "ApiConnection",
                                                             "inputs": {
                                                                 "body": {
                                                                     "incidentArmId": "@triggerBody()?['object']?['id']",
@@ -548,13 +680,14 @@
                                                                 },
                                                                 "method": "put",
                                                                 "path": "/Incidents"
-                                                            }
+                                                            },
+                                                            "runAfter": {},
+                                                            "type": "ApiConnection"
                                                         }
                                                     },
                                                     "else": {
                                                         "actions": {
                                                             "Update_incident_2": {
-                                                                "type": "ApiConnection",
                                                                 "inputs": {
                                                                     "body": {
                                                                         "incidentArmId": "@triggerBody()?['object']?['id']",
@@ -577,7 +710,9 @@
                                                                     },
                                                                     "method": "put",
                                                                     "path": "/Incidents"
-                                                                }
+                                                                },
+                                                                "runAfter": {},
+                                                                "type": "ApiConnection"
                                                             }
                                                         }
                                                     },
@@ -591,16 +726,9 @@
                                                             }
                                                         ]
                                                     },
+                                                    "runAfter": {},
                                                     "type": "If"
                                                 }
-                                            },
-                                            "runAfter": {
-                                                "For_each_Host": [
-                                                    "Succeeded"
-                                                ],
-                                                "For_each_IP_Address": [
-                                                    "Succeeded"
-                                                ]
                                             },
                                             "expression": {
                                                 "or": [
@@ -618,9 +746,21 @@
                                                     }
                                                 ]
                                             },
+                                            "runAfter": {
+                                                "For_each_DNS": [
+                                                    "Succeeded"
+                                                ],
+                                                "For_each_Host": [
+                                                    "Succeeded"
+                                                ],
+                                                "For_each_IP_Address": [
+                                                    "Succeeded"
+                                                ]
+                                            },
                                             "type": "If"
                                         }
-                                    }
+                                    },
+                                    "outputs": {}
                                 },
                                 "parameters": {
                                     "$connections": {
@@ -679,12 +819,12 @@
                         ],
                         "releaseNotes": [
                             {
-                                "version": "1.0.2",
+                                "version": "[variables('playbookVersion1')]",
                                 "title": "MDTI Automated Triage",
                                 "notes": [
                                     "Initial version",
                                     "Updated version with Secure Inputs for HTTP REST and Secure Output for MDTI-Base actions",
-                                    "Updated version with Integration Account to enable Inline Javascript action to check for non-Public IPs"
+                                    "Updated version with free-tier Integration Accountto enable Inline Javascript action to check for non-Public IPs; Add DNS Entities to playbook lookups"
                                 ]
                             }
                         ]
@@ -868,7 +1008,7 @@
                             "location": "[[variables('workspace-location-inline')]",
                             "kind": "V1",
                             "properties": {
-                                "displayName": "keyvault",
+                                "displayName": "keyvault-MDTI-Base",
                                 "api": {
                                     "id": "[[subscriptionResourceId('Microsoft.Web/locations/managedApis', variables('workspace-location-inline'), 'keyvault')]"
                                 },
@@ -1068,12 +1208,11 @@
                         ],
                         "releaseNotes": [
                             {
-                                "version": "1.0.2",
+                                "version": "[variables('playbookVersion2')]",
                                 "title": "MDTI Base",
                                 "notes": [
-                                    "Version 1.0.1 with Key Vault to hold Client-Secret",
                                     "Updated version with Key Vault to hold secret",
-                                    "Updated version with Integration Account to enable Inline Javascript action to check for non-Public IPs"
+                                    "Updated version with free-tier Integration Accountto enable Inline Javascript action to check for non-Public IPs; Add DNS Entities to playbook lookups"
                                 ]
                             }
                         ]
@@ -1182,13 +1321,25 @@
                                         }
                                     },
                                     "actions": {
-                                        "Entities_-_Get_Hosts": {
+                                        "Entities_-_Get_DNS": {
+                                            "inputs": {
+                                                "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/entities/dnsresolution"
+                                            },
                                             "runAfter": {
                                                 "MDTI-Base": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "ApiConnection",
+                                            "type": "ApiConnection"
+                                        },
+                                        "Entities_-_Get_Hosts": {
                                             "inputs": {
                                                 "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
                                                 "host": {
@@ -1198,15 +1349,15 @@
                                                 },
                                                 "method": "post",
                                                 "path": "/entities/host"
-                                            }
-                                        },
-                                        "Entities_-_Get_IPs": {
+                                            },
                                             "runAfter": {
                                                 "MDTI-Base": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "ApiConnection",
+                                            "type": "ApiConnection"
+                                        },
+                                        "Entities_-_Get_IPs": {
                                             "inputs": {
                                                 "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
                                                 "host": {
@@ -1216,7 +1367,181 @@
                                                 },
                                                 "method": "post",
                                                 "path": "/entities/ip"
-                                            }
+                                            },
+                                            "runAfter": {
+                                                "MDTI-Base": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ApiConnection"
+                                        },
+                                        "For_each_DNS": {
+                                            "actions": {
+                                                "Add_comment_to_incident_(V3)_3": {
+                                                    "inputs": {
+                                                        "body": {
+                                                            "incidentArmId": "@triggerBody()?['object']?['id']",
+                                                            "message": "<p>MDTI Web Components for Indicator: @{items('For_each_DNS')?['DomainName']}<br>\n@{body('Create_DNS_HTML_table')}</p>"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "post",
+                                                        "path": "/Incidents/Comment"
+                                                    },
+                                                    "runAfter": {
+                                                        "Create_DNS_HTML_table": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ApiConnection"
+                                                },
+                                                "Create_DNS_HTML_table": {
+                                                    "inputs": {
+                                                        "format": "HTML",
+                                                        "from": "@variables('result_output_dns')"
+                                                    },
+                                                    "runAfter": {
+                                                        "For_each_DNS_comonent": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Table"
+                                                },
+                                                "For_each_DNS_comonent": {
+                                                    "actions": {
+                                                        "Append_to_Result_DNS": {
+                                                            "inputs": {
+                                                                "name": "result_output_dns",
+                                                                "value": {
+                                                                    "Category": "@items('For_each_DNS_comonent')['category']",
+                                                                    "LastSeenDateTime": "@items('For_each_DNS_comonent')['lastSeenDateTime']",
+                                                                    "Name": "@items('For_each_DNS_comonent')['name']",
+                                                                    "Version": "@items('For_each_DNS_comonent')['version']"
+                                                                }
+                                                            },
+                                                            "runAfter": {},
+                                                            "type": "AppendToArrayVariable"
+                                                        }
+                                                    },
+                                                    "foreach": "@body('Parse_DNS_components')",
+                                                    "runAfter": {
+                                                        "Set_Result_DNS": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Foreach"
+                                                },
+                                                "Get_components_for_DNS": {
+                                                    "inputs": {
+                                                        "authentication": {
+                                                            "audience": "@body('MDTI-Base')?['resource']",
+                                                            "clientId": "@body('MDTI-Base')?['clientId']",
+                                                            "secret": "@body('MDTI-Base')?['clientSecret']",
+                                                            "tenant": "@body('MDTI-Base')?['tenantId']",
+                                                            "type": "ActiveDirectoryOAuth"
+                                                        },
+                                                        "headers": {
+                                                            "Content-Type": "application/json"
+                                                        },
+                                                        "method": "GET",
+                                                        "queries": {
+                                                            "$count": "true",
+                                                            "$top": "25"
+                                                        },
+                                                        "uri": "https://@{body('MDTI-Base')?['MDTI-BaseUrl']}/@{body('MDTI-Base')?['Api-Version']}/security/threatIntelligence/hosts('@{items('For_each_DNS')?['DomainName']}')/components"
+                                                    },
+                                                    "runAfter": {},
+                                                    "runtimeConfiguration": {
+                                                        "secureData": {
+                                                            "properties": [
+                                                                "inputs"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "type": "Http"
+                                                },
+                                                "Parse_DNS_components": {
+                                                    "inputs": {
+                                                        "content": "@body('Get_components_for_DNS')?['value']",
+                                                        "schema": {
+                                                            "items": {
+                                                                "properties": {
+                                                                    "category": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "firstSeenDateTime": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "host": {
+                                                                        "properties": {
+                                                                            "id": {
+                                                                                "type": "string"
+                                                                            }
+                                                                        },
+                                                                        "type": "object"
+                                                                    },
+                                                                    "id": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "lastSeenDateTime": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string"
+                                                                    },
+                                                                    "version": {
+                                                                        "type": "string"
+                                                                    }
+                                                                },
+                                                                "required": [
+                                                                    "id",
+                                                                    "firstSeenDateTime",
+                                                                    "lastSeenDateTime",
+                                                                    "name",
+                                                                    "version",
+                                                                    "category",
+                                                                    "host"
+                                                                ],
+                                                                "type": "object"
+                                                            },
+                                                            "type": "array"
+                                                        }
+                                                    },
+                                                    "runAfter": {
+                                                        "Get_components_for_DNS": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ParseJson"
+                                                },
+                                                "Set_Result_DNS": {
+                                                    "inputs": {
+                                                        "name": "result_output_dns",
+                                                        "value": []
+                                                    },
+                                                    "runAfter": {
+                                                        "Parse_DNS_components": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "SetVariable"
+                                                }
+                                            },
+                                            "foreach": "@body('Entities_-_Get_DNS')?['Dnsresolutions']",
+                                            "runAfter": {
+                                                "Initialize_Result_DNS": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "runtimeConfiguration": {
+                                                "concurrency": {
+                                                    "repetitions": 1
+                                                }
+                                            },
+                                            "type": "Foreach"
                                         },
                                         "For_each_Host": {
                                             "actions": {
@@ -1257,7 +1582,7 @@
                                                         },
                                                         "For_each_host_component": {
                                                             "actions": {
-                                                                "Append_to_array_variable": {
+                                                                "Append_to_Result_Host": {
                                                                     "inputs": {
                                                                         "name": "result_output_host",
                                                                         "value": {
@@ -1611,12 +1936,6 @@
                                             "type": "JavaScriptCode"
                                         },
                                         "Init_Result_Host": {
-                                            "runAfter": {
-                                                "Entities_-_Get_Hosts": [
-                                                    "Succeeded"
-                                                ]
-                                            },
-                                            "type": "InitializeVariable",
                                             "inputs": {
                                                 "variables": [
                                                     {
@@ -1624,15 +1943,15 @@
                                                         "type": "array"
                                                     }
                                                 ]
-                                            }
-                                        },
-                                        "Init_Result_IP": {
+                                            },
                                             "runAfter": {
-                                                "Entities_-_Get_IPs": [
+                                                "Entities_-_Get_Hosts": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "InitializeVariable",
+                                            "type": "InitializeVariable"
+                                        },
+                                        "Init_Result_IP": {
                                             "inputs": {
                                                 "variables": [
                                                     {
@@ -1640,27 +1959,51 @@
                                                         "type": "array"
                                                     }
                                                 ]
-                                            }
+                                            },
+                                            "runAfter": {
+                                                "Entities_-_Get_IPs": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "InitializeVariable"
+                                        },
+                                        "Initialize_Result_DNS": {
+                                            "inputs": {
+                                                "variables": [
+                                                    {
+                                                        "name": "result_output_dns",
+                                                        "type": "array"
+                                                    }
+                                                ]
+                                            },
+                                            "runAfter": {
+                                                "Entities_-_Get_DNS": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "InitializeVariable"
                                         },
                                         "MDTI-Base": {
-                                            "type": "Workflow",
                                             "inputs": {
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "[[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
+                                                        "id": "/subscriptions/c6229d3c-9fb0-404c-9a21-22bdcc0cf547/resourceGroups/Sentinel-RG/providers/Microsoft.Logic/workflows/MDTI-Base"
                                                     }
                                                 }
                                             },
+                                            "runAfter": {},
                                             "runtimeConfiguration": {
                                                 "secureData": {
                                                     "properties": [
                                                         "outputs"
                                                     ]
                                                 }
-                                            }
+                                            },
+                                            "type": "Workflow"
                                         }
-                                    }
+                                    },
+                                    "outputs": {}
                                 },
                                 "parameters": {
                                     "$connections": {
@@ -1719,11 +2062,11 @@
                         ],
                         "releaseNotes": [
                             {
-                                "version": "1.0.2",
+                                "version": "[variables('playbookVersion3')]",
                                 "title": "MDTI Data WebComponents",
                                 "notes": [
                                     "Updated version with Secure Inputs for HTTP REST and Secure Output for MDTI-Base actions",
-                                    "Updated version with Integration Account to enable Inline Javascript action to check for non-Public IPs"
+                                    "Updated version with free-tier Integration Accountto enable Inline Javascript action to check for non-Public IPs; Add DNS Entities to playbook lookups"
                                 ]
                             }
                         ]
@@ -1832,13 +2175,25 @@
                                         }
                                     },
                                     "actions": {
-                                        "Entities_-_Get_Hosts": {
+                                        "Entities_-_Get_DNS": {
+                                            "inputs": {
+                                                "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
+                                                "host": {
+                                                    "connection": {
+                                                        "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                    }
+                                                },
+                                                "method": "post",
+                                                "path": "/entities/dnsresolution"
+                                            },
                                             "runAfter": {
                                                 "MDTI-Base": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "ApiConnection",
+                                            "type": "ApiConnection"
+                                        },
+                                        "Entities_-_Get_Hosts": {
                                             "inputs": {
                                                 "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
                                                 "host": {
@@ -1848,15 +2203,15 @@
                                                 },
                                                 "method": "post",
                                                 "path": "/entities/host"
-                                            }
-                                        },
-                                        "Entities_-_Get_IPs": {
+                                            },
                                             "runAfter": {
                                                 "MDTI-Base": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "ApiConnection",
+                                            "type": "ApiConnection"
+                                        },
+                                        "Entities_-_Get_IPs": {
                                             "inputs": {
                                                 "body": "@triggerBody()?['object']?['properties']?['relatedEntities']",
                                                 "host": {
@@ -1866,7 +2221,94 @@
                                                 },
                                                 "method": "post",
                                                 "path": "/entities/ip"
-                                            }
+                                            },
+                                            "runAfter": {
+                                                "MDTI-Base": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "ApiConnection"
+                                        },
+                                        "For_each_DNS": {
+                                            "actions": {
+                                                "Add_comment_to_incident_(V3)_3": {
+                                                    "inputs": {
+                                                        "body": {
+                                                            "incidentArmId": "@triggerBody()?['object']?['id']",
+                                                            "message": "<p>MDTI Reputation: @{items('For_each_DNS')?['DomainName']}<br>\nClassification: @{body('Get_reputation_for_DNS')?['classification']} (@{body('Get_reputation_for_DNS')?['score']})<br>\n@{body('Create_DNS_HTML_table')}</p>"
+                                                        },
+                                                        "host": {
+                                                            "connection": {
+                                                                "name": "@parameters('$connections')['azuresentinel']['connectionId']"
+                                                            }
+                                                        },
+                                                        "method": "post",
+                                                        "path": "/Incidents/Comment"
+                                                    },
+                                                    "runAfter": {
+                                                        "Create_DNS_HTML_table": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "ApiConnection"
+                                                },
+                                                "Create_DNS_HTML_table": {
+                                                    "inputs": {
+                                                        "format": "HTML",
+                                                        "from": "@variables('result_output_dns')"
+                                                    },
+                                                    "runAfter": {
+                                                        "Set_Result_DNS": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "Table"
+                                                },
+                                                "Get_reputation_for_DNS": {
+                                                    "inputs": {
+                                                        "authentication": {
+                                                            "audience": "@body('MDTI-Base')?['resource']",
+                                                            "clientId": "@body('MDTI-Base')?['clientId']",
+                                                            "secret": "@body('MDTI-Base')?['clientSecret']",
+                                                            "tenant": "@body('MDTI-Base')?['tenantId']",
+                                                            "type": "ActiveDirectoryOAuth"
+                                                        },
+                                                        "headers": {
+                                                            "Content-Type": "application/json"
+                                                        },
+                                                        "method": "GET",
+                                                        "uri": "https://@{body('MDTI-Base')?['MDTI-BaseUrl']}/@{body('MDTI-Base')?['Api-Version']}/security/threatIntelligence/hosts('@{items('For_each_DNS')?['DomainName']}')/reputation"
+                                                    },
+                                                    "runAfter": {},
+                                                    "runtimeConfiguration": {
+                                                        "secureData": {
+                                                            "properties": [
+                                                                "inputs"
+                                                            ]
+                                                        }
+                                                    },
+                                                    "type": "Http"
+                                                },
+                                                "Set_Result_DNS": {
+                                                    "inputs": {
+                                                        "name": "result_output_dns",
+                                                        "value": "@body('Get_reputation_for_DNS')?['rules']"
+                                                    },
+                                                    "runAfter": {
+                                                        "Get_reputation_for_DNS": [
+                                                            "Succeeded"
+                                                        ]
+                                                    },
+                                                    "type": "SetVariable"
+                                                }
+                                            },
+                                            "foreach": "@body('Entities_-_Get_DNS')?['Dnsresolutions']",
+                                            "runAfter": {
+                                                "Initialize_Result_DNS": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "Foreach"
                                         },
                                         "For_each_Host": {
                                             "actions": {
@@ -1899,7 +2341,7 @@
                                                                 "from": "@variables('result_output_host')"
                                                             },
                                                             "runAfter": {
-                                                                "Set_host_variable": [
+                                                                "Set_Result_Host": [
                                                                     "Succeeded"
                                                                 ]
                                                             },
@@ -1930,7 +2372,7 @@
                                                             },
                                                             "type": "Http"
                                                         },
-                                                        "Set_host_variable": {
+                                                        "Set_Result_Host": {
                                                             "inputs": {
                                                                 "name": "result_output_host",
                                                                 "value": "@body('Get_reputation_for_host')?['rules']"
@@ -2011,7 +2453,7 @@
                                                                 "from": "@variables('result_output_ip')"
                                                             },
                                                             "runAfter": {
-                                                                "Set_ip_variable": [
+                                                                "Set_Result_IP": [
                                                                     "Succeeded"
                                                                 ]
                                                             },
@@ -2042,7 +2484,7 @@
                                                             },
                                                             "type": "Http"
                                                         },
-                                                        "Set_ip_variable": {
+                                                        "Set_Result_IP": {
                                                             "inputs": {
                                                                 "name": "result_output_ip",
                                                                 "value": "@body('Get_reputation')?['rules']"
@@ -2097,12 +2539,6 @@
                                             "type": "JavaScriptCode"
                                         },
                                         "Init_Result_Host": {
-                                            "runAfter": {
-                                                "Entities_-_Get_Hosts": [
-                                                    "Succeeded"
-                                                ]
-                                            },
-                                            "type": "InitializeVariable",
                                             "inputs": {
                                                 "variables": [
                                                     {
@@ -2110,15 +2546,15 @@
                                                         "type": "array"
                                                     }
                                                 ]
-                                            }
-                                        },
-                                        "Init_Result_IP": {
+                                            },
                                             "runAfter": {
-                                                "Entities_-_Get_IPs": [
+                                                "Entities_-_Get_Hosts": [
                                                     "Succeeded"
                                                 ]
                                             },
-                                            "type": "InitializeVariable",
+                                            "type": "InitializeVariable"
+                                        },
+                                        "Init_Result_IP": {
                                             "inputs": {
                                                 "variables": [
                                                     {
@@ -2126,27 +2562,51 @@
                                                         "type": "array"
                                                     }
                                                 ]
-                                            }
+                                            },
+                                            "runAfter": {
+                                                "Entities_-_Get_IPs": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "InitializeVariable"
+                                        },
+                                        "Initialize_Result_DNS": {
+                                            "inputs": {
+                                                "variables": [
+                                                    {
+                                                        "name": "result_output_dns",
+                                                        "type": "array"
+                                                    }
+                                                ]
+                                            },
+                                            "runAfter": {
+                                                "Entities_-_Get_DNS": [
+                                                    "Succeeded"
+                                                ]
+                                            },
+                                            "type": "InitializeVariable"
                                         },
                                         "MDTI-Base": {
-                                            "type": "Workflow",
                                             "inputs": {
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "[[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
+                                                        "id": "/subscriptions/c6229d3c-9fb0-404c-9a21-22bdcc0cf547/resourceGroups/Sentinel-RG/providers/Microsoft.Logic/workflows/MDTI-Base"
                                                     }
                                                 }
                                             },
+                                            "runAfter": {},
                                             "runtimeConfiguration": {
                                                 "secureData": {
                                                     "properties": [
                                                         "outputs"
                                                     ]
                                                 }
-                                            }
+                                            },
+                                            "type": "Workflow"
                                         }
-                                    }
+                                    },
+                                    "outputs": {}
                                 },
                                 "parameters": {
                                     "$connections": {
@@ -2205,11 +2665,11 @@
                         ],
                         "releaseNotes": [
                             {
-                                "version": "1.0.2",
+                                "version": "[variables('playbookVersion4')]",
                                 "title": "MDTI Intel Reputation",
                                 "notes": [
                                     "Updated version with Secure Inputs for HTTP REST and Secure Output for MDTI-Base actions",
-                                    "Updated version with Integration Account to enable Inline Javascript action to check for non-Public IPs"
+                                    "Updated version with free-tier Integration Accountto enable Inline Javascript action to check for non-Public IPs; Add DNS Entities to playbook lookups"
                                 ]
                             }
                         ]
