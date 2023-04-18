@@ -106,7 +106,7 @@
                         "AzureSentinelConnectionName": "[[concat('azuresentinel-', parameters('PlaybookName'))]",
                         "connection-1": "[[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', variables('workspace-location-inline'), '/managedApis/azuresentinel')]",
                         "_connection-1": "[[variables('connection-1')]",
-                        "workspace-location-inline": "[resourceGroup().location]",
+                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "integration_account_name": "mdti-integration-account"
@@ -919,7 +919,7 @@
                         }
                     },
                     "variables": {
-                        "workspace-location-inline": "[resourceGroup().location]",
+                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "connections_keyvault_name": "[[format('keyvault-{0}', parameters('PlaybookName'))]",
@@ -930,7 +930,7 @@
                         {
                             "apiVersion": "2016-06-01",
                             "name": "[[variables('integration_account_name')]",
-                            "location": "[resourceGroup().location]",
+                            "location": "[[variables('workspace-location-inline')]",
                             "type": "Microsoft.Logic/IntegrationAccounts",
                             "tags": {
                                 "Source": "MDTI"
@@ -1261,7 +1261,7 @@
                         "AzureSentinelConnectionName": "[[concat('azuresentinel-', parameters('PlaybookName'))]",
                         "connection-1": "[[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', variables('workspace-location-inline'), '/managedApis/azuresentinel')]",
                         "_connection-1": "[[variables('connection-1')]",
-                        "workspace-location-inline": "[resourceGroup().location]",
+                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "integration_account_name": "mdti-integration-account"
@@ -2115,7 +2115,7 @@
                         "AzureSentinelConnectionName": "[[concat('azuresentinel-', parameters('PlaybookName'))]",
                         "connection-1": "[[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', variables('workspace-location-inline'), '/managedApis/azuresentinel')]",
                         "_connection-1": "[[variables('connection-1')]",
-                        "workspace-location-inline": "[resourceGroup().location]",
+                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "integration_account_name": "mdti-integration-account"
