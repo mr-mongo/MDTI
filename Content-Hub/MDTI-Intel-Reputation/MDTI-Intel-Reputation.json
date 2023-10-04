@@ -520,7 +520,7 @@
                                 "host": {
                                     "triggerName": "manual",
                                     "workflow": {
-                                        "id": "/subscriptions/c6229d3c-9fb0-404c-9a21-22bdcc0cf547/resourceGroups/Sentinel-RG/providers/Microsoft.Logic/workflows/MDTI-Base"
+                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
                                     }
                                 }
                             },
