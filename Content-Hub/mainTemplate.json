@@ -18,7 +18,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "[concat('Region to deploy solution resources -- separate from location selection ',parameters('location'))]"
+                "description": "Region to deploy solution resources -- e.g.: eastus, westus3, swedencentral, australiaeast"
             }
         },
         "workspace": {
@@ -36,7 +36,7 @@
         "_email": "[variables('email')]",
         "MDTI-Automated-Triage": "MDTI-Automated-Triage",
         "_MDTI-Automated-Triage": "[variables('MDTI-Automated-Triage')]",
-        "playbookVersion1": "1.0.2",
+        "playbookVersion1": "1.0.3",
         "playbookContentId1": "MDTI-Automated-Triage",
         "_playbookContentId1": "[variables('playbookContentId1')]",
         "playbookId1": "[resourceId('Microsoft.Logic/workflows', variables('playbookContentId1'))]",
@@ -44,21 +44,21 @@
         "workspaceResourceId": "[resourceId('microsoft.OperationalInsights/Workspaces', parameters('workspace'))]",
         "MDTI-Base": "MDTI-Base",
         "_MDTI-Base": "[variables('MDTI-Base')]",
-        "playbookVersion2": "1.0.2",
+        "playbookVersion2": "1.0.3",
         "playbookContentId2": "MDTI-Base",
         "_playbookContentId2": "[variables('playbookContentId2')]",
         "playbookId2": "[resourceId('Microsoft.Logic/workflows', variables('playbookContentId2'))]",
         "playbookTemplateSpecName2": "[concat(parameters('workspace'),'-pl-',uniquestring(variables('_playbookContentId2')))]",
         "MDTI-Data-WebComponents": "MDTI-Data-WebComponents",
         "_MDTI-Data-WebComponents": "[variables('MDTI-Data-WebComponents')]",
-        "playbookVersion3": "1.0.2",
+        "playbookVersion3": "1.0.3",
         "playbookContentId3": "MDTI-Data-WebComponents",
         "_playbookContentId3": "[variables('playbookContentId3')]",
         "playbookId3": "[resourceId('Microsoft.Logic/workflows', variables('playbookContentId3'))]",
         "playbookTemplateSpecName3": "[concat(parameters('workspace'),'-pl-',uniquestring(variables('_playbookContentId3')))]",
         "MDTI-Intel-Reputation": "MDTI-Intel-Reputation",
         "_MDTI-Intel-Reputation": "[variables('MDTI-Intel-Reputation')]",
-        "playbookVersion4": "1.0.2",
+        "playbookVersion4": "1.0.3",
         "playbookContentId4": "MDTI-Intel-Reputation",
         "_playbookContentId4": "[variables('playbookContentId4')]",
         "playbookId4": "[resourceId('Microsoft.Logic/workflows', variables('playbookContentId4'))]",
@@ -106,7 +106,7 @@
                         "AzureSentinelConnectionName": "[[concat('azuresentinel-', parameters('PlaybookName'))]",
                         "connection-1": "[[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', variables('workspace-location-inline'), '/managedApis/azuresentinel')]",
                         "_connection-1": "[[variables('connection-1')]",
-                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
+                        "workspace-location-inline": "[resourceGroup().location]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "integration_account_name": "mdti-integration-account"
@@ -639,7 +639,7 @@
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "/subscriptions/c6229d3c-9fb0-404c-9a21-22bdcc0cf547/resourceGroups/Sentinel-RG/providers/Microsoft.Logic/workflows/MDTI-Base"
+                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
                                                     }
                                                 }
                                             },
@@ -919,7 +919,7 @@
                         }
                     },
                     "variables": {
-                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
+                        "workspace-location-inline": "[resourceGroup().location]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "connections_keyvault_name": "[[format('keyvault-{0}', parameters('PlaybookName'))]",
@@ -930,7 +930,7 @@
                         {
                             "apiVersion": "2016-06-01",
                             "name": "[[variables('integration_account_name')]",
-                            "location": "[[variables('workspace-location-inline')]",
+                            "location": "[resourceGroup().location]",
                             "type": "Microsoft.Logic/IntegrationAccounts",
                             "tags": {
                                 "Source": "MDTI"
@@ -1261,7 +1261,7 @@
                         "AzureSentinelConnectionName": "[[concat('azuresentinel-', parameters('PlaybookName'))]",
                         "connection-1": "[[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', variables('workspace-location-inline'), '/managedApis/azuresentinel')]",
                         "_connection-1": "[[variables('connection-1')]",
-                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
+                        "workspace-location-inline": "[resourceGroup().location]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "integration_account_name": "mdti-integration-account"
@@ -1988,7 +1988,7 @@
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "/subscriptions/c6229d3c-9fb0-404c-9a21-22bdcc0cf547/resourceGroups/Sentinel-RG/providers/Microsoft.Logic/workflows/MDTI-Base"
+                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
                                                     }
                                                 }
                                             },
@@ -2115,7 +2115,7 @@
                         "AzureSentinelConnectionName": "[[concat('azuresentinel-', parameters('PlaybookName'))]",
                         "connection-1": "[[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', variables('workspace-location-inline'), '/managedApis/azuresentinel')]",
                         "_connection-1": "[[variables('connection-1')]",
-                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
+                        "workspace-location-inline": "[resourceGroup().location]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "integration_account_name": "mdti-integration-account"
@@ -2596,7 +2596,7 @@
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "/subscriptions/c6229d3c-9fb0-404c-9a21-22bdcc0cf547/resourceGroups/Sentinel-RG/providers/Microsoft.Logic/workflows/MDTI-Base"
+                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
                                                     }
                                                 }
                                             },
