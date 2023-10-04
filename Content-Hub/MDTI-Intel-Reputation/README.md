@@ -1,4 +1,6 @@
 ### MDTI-Intel-Reputation
+**v1.0.3**
+Fix MDTI-Base workflow id reference
 **v1.0.2**
 Updated version using free-tier Integration Account to enable Inline Javascript action to check for non-Public IPs; Add DNS Entities to playbook lookups
 **v1.0.1**  
