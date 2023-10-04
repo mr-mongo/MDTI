@@ -5,8 +5,9 @@ No changes
 This version creates a free-tier Intergration Account resource to enable Inline Javascript actions to check for non-Public IPs.  
 **v1.0.1**  
 This version creates a Key Vault resource to store the Client-Secret.  
-
-The benefit of the Key Vault secure storage of the Client-Secret instead of relying on Logic App SecureString parameters, which in turn allows the Client-Secret value to be updated within the Key Vault instead of requiring a complete redeployment of the MDTI-Base template.  
+Benefits of Key Vault over Logic App SecureString parameters:
+1. Better security
+2. Management/update of the Secret value within the Key Vault, rather than needing to redeploy the entire MDTI-Base Logic App template  
 
 Fixes:
 1. Create the MDTI-Base Logic App with a System-Managed Identity
