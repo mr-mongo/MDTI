@@ -1,5 +1,5 @@
 ### MDTI-Base
-**v1.0.3**
+**v1.0.3**  
 No changes
 **v1.0.2**  
 This version creates a free-tier Intergration Account resource to enable Inline Javascript actions to check for non-Public IPs.  
