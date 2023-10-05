@@ -18,7 +18,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "[concat('Region to deploy solution resources -- separate from location selection ',parameters('location'))]"
+                "description": "Region to deploy solution resources -- e.g.: eastus, westus3, swedencentral, australiaeast"
             }
         },
         "workspace": {
@@ -604,7 +604,7 @@
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name,'/providers/Microsoft.Logic/workflows/MDTI-Base')]"
+                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
                                                     }
                                                 }
                                             },
@@ -884,7 +884,7 @@
                         }
                     },
                     "variables": {
-                        "workspace-location-inline": "[concat('[resourceGroup().locatio', 'n]')]",
+                        "workspace-location-inline": "[resourceGroup().location]",
                         "workspace-name": "[parameters('workspace')]",
                         "workspaceResourceId": "[[resourceId('microsoft.OperationalInsights/Workspaces', variables('workspace-name'))]",
                         "connections_keyvault_name": "[[format('keyvault-{0}', parameters('PlaybookName'))]",
@@ -895,7 +895,7 @@
                         {
                             "apiVersion": "2016-06-01",
                             "name": "[[variables('integration_account_name')]",
-                            "location": "[[variables('workspace-location-inline')]",
+                            "location": "[resourceGroup().location]",
                             "type": "Microsoft.Logic/IntegrationAccounts",
                             "tags": {
                                 "Source": "MDTI"
@@ -1918,7 +1918,7 @@
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name,'/providers/Microsoft.Logic/workflows/MDTI-Base')]"
+                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
                                                     }
                                                 }
                                             },
@@ -2491,7 +2491,7 @@
                                                 "host": {
                                                     "triggerName": "manual",
                                                     "workflow": {
-                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name,'/providers/Microsoft.Logic/workflows/MDTI-Base')]"
+                                                        "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.Logic/workflows/MDTI-Base')]"
                                                     }
                                                 }
                                             },
